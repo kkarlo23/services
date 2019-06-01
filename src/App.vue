@@ -4,7 +4,7 @@
     <div class="container">
     <div>
       <label for>Name of service</label>
-      <input type="text" v-model="name">
+      <input type="text" v-model="name" placeholder="Provide a name for your service..">
       <label for>Quantity</label>
       <input type="number" v-model="quantity">
       <label for>Tax rate (%)</label>
@@ -14,9 +14,9 @@
       <label for>Buying price</label>
       <input type="number" v-model="buyingPrice">
       <label for>Selling price</label>
-      <input type="number" :value="sellingPrice" @focus="toggle" @blur="toggle">
+      <input type="number" :value="sellingPrice" @focus="toggle" @blur="toggle" placeholder="Will be calculated automaticaly">
       <label for>Total</label>
-      <input type="number" :value="total" @focus="toggle" @blur="toggle">
+      <input type="number" :value="total" @focus="toggle" @blur="toggle" placeholder="Will be calculated automaticaly">
       <br>
       <button @click="add">Add</button>
       <p class="warn" v-if="totalAndSpFocused == true">You should not change Selling price and Total manually</p>
@@ -28,10 +28,10 @@
         <p class="description"> Quantity: {{ one.quantity }} </p>
         <p class="description"> Tax: {{ one.tax }}%</p>
         <p class="description"> Margin: {{ one.margin }}%</p>
-        <p class="description"> Buying price: {{ one.buyingPrice }} </p>
-        <p class="description"> Selling price: {{ one.sellingPrice }} </p>
+        <p class="description"> Buying price: {{ one.buyingPrice }}€ </p>
+        <p class="description"> Selling price: {{ one.sellingPrice }}€ </p>
         <hr>
-        <p class="description"><b>TOTAL: {{ one.total }} </b></p>
+        <p class="description"><b>TOTAL: {{ one.total }}€ </b></p>
       </div>
     </div>
     </div>
@@ -39,11 +39,16 @@
 </template>
 
 <script>
+//scripts for validation
+import validation from "./validation";
+
 export default {
   name: "app",
+  //no other components, I think is to liitle app to add them
   components: {},
   data() {
     return {
+      //input field values are stored here
       id: 4,
       totalAndSpFocused: false,
       name: "",
@@ -51,6 +56,7 @@ export default {
       tax: "",
       margin: "",
       buyingPrice: "",
+      //first few services
       services: [{
         id: 1,
         name: "first",
@@ -86,7 +92,10 @@ export default {
   },
   methods: {
     add(event){
-      if(this.validate() == true){this.services.unshift({
+      //validating input
+      if(validation.validateAndAdd(this.name, this.quantity, this.tax, this.buyingPrice) == true){
+        //adding to services array
+        this.services.unshift({
         name: this.name,
         quantity: this.quantity,
         tax: this.tax,
@@ -100,20 +109,13 @@ export default {
       this.id++;
       this.reset();
       }else{
-        alert(`You need to enter all the fields to proceed
+        alert(`You need to enter correct data in all the fields to proceed
         and please note that the name should not be number`)
       }
       
     },
-    validate(){
-      if(isNaN(this.name) == true && this.name != "" && this.quantity != "" && this.tax != "" && this.buyingPrice ) {
-        return true;
-      }else{
-        return false;
-      }
-
-    },
     reset(){
+      //setting input fields to blank after submitting
       this.name = "";
       this.quantity = "";
       this.tax = "";
@@ -123,35 +125,24 @@ export default {
       this.total = "";
     },
     toggle(e){
+      //toggling warning if user clicks on selling price or total
       this.totalAndSpFocused = !this.totalAndSpFocused;
     }
   },
   computed: {
+    //computing selling price
     sellingPrice: {
       get(){
-        if(this.buyingPrice === "" || this.tax === "" || this.margin === ""){
-          return ""
-        }else{
-          var buyPrice = Number(this.buyingPrice),
-            tax = Number(this.tax),
-            margin = Number(this.margin);
-        return (buyPrice +(buyPrice * (tax / 100)) +(buyPrice * (margin / 100))).toFixed(2)
-        }
+        return validation.sellingPriceValidation(this.buyingPrice, this.tax, this.margin);
       },
       set(){
 
       }
     },
+    //computing total
     total: {
       get(){
-        if(this.quantity === "" || this.sellingPrice === "" || this.buyingPrice === "" || this.tax === ""){
-          return ""
-        }else{
-          var quantity = this.quantity;
-          var sellingPrice = this.sellingPrice;
-          return quantity * sellingPrice;
-        }
-        
+        return validation.totalValidation(this.quantity, this.sellingPrice, this.buyingPrice, this.tax);
       },
       set(){
 
